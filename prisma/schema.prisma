@@ -31,7 +31,7 @@ model Profile {
   phone String? @db.VarChar(20)
   user_id Int @unique
 
-  user User @relation(fields: [user_id], references: [Id])
+  user User @relation(fields: [user_id], references: [Id], onDelete: Cascade)
   addresses Address[]
 
   @@map("profiles")
