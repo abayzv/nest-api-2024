@@ -82,4 +82,70 @@ describe('UserController', () => {
     })
 
   })
+
+  describe('POST /api/users/login', () => {
+
+    beforeEach(async () => {
+      await testService.createUser();
+    })
+
+    it("should be rejected if request is invalid", async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/users/login')
+        .send({
+          username: '',
+          password: '',
+        })
+
+      logger.info(response.body)
+
+      expect(response.status).toBe(400)
+      expect(response.body.error).toBeDefined()
+    })
+
+    it("should be able to login", async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/users/login')
+        .send({
+          username: 'test',
+          password: 'P@ssw0rd',
+        })
+
+      logger.info(response.body)
+
+      expect(response.status).toBe(200)
+      expect(response.body.data.id).toBeDefined()
+      expect(response.body.data.username).toBe('test')
+    })
+
+    it("should be rejected if username is not exist", async () => {
+      testService.deleteUser();
+      const response = await request(app.getHttpServer())
+        .post('/api/users/login')
+        .send({
+          username: 'test',
+          password: 'P@ssw0rd',
+        })
+
+      logger.info(response.body)
+
+      expect(response.status).toBe(400)
+      expect(response.body.error).toBeDefined()
+    })
+
+    it("should be rejected if password is wrong", async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/users/login')
+        .send({
+          username: 'test',
+          password: 'P@ssw0rd123',
+        })
+
+      logger.info(response.body)
+
+      expect(response.status).toBe(400)
+      expect(response.body.error).toBeDefined()
+    })
+
+  })
 });

@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode } from '@nestjs/common';
 import { UserService } from './user.service';
 import { WebResponse } from '../model/web.model';
-import { RegisterUserRequest, UserResponse } from '../model/user.model';
+import { LoginUserRequest, RegisterUserRequest, UserResponse } from '../model/user.model';
 
 @Controller('/api/users')
 export class UserController {
@@ -15,6 +15,19 @@ export class UserController {
     const result = await this.userService.register(request);
     return {
       message: 'User registered successfully',
+      data: result,
+    }
+  }
+
+  @Post('/login')
+  @HttpCode(200)
+  async login(
+    @Body() request: LoginUserRequest
+  ): Promise<WebResponse<UserResponse>> {
+    const result = await this.userService.login(request);
+
+    return {
+      message: 'User logged in successfully',
       data: result,
     }
   }

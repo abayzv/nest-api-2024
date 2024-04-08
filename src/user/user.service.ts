@@ -1,5 +1,5 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
-import { RegisterUserRequest, UserResponse } from '../model/user.model';
+import { LoginUserRequest, RegisterUserRequest, UserResponse } from '../model/user.model';
 import { ValidationService } from '../common/validation.service'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { PrismaService } from '../common/prisma.service';
@@ -58,6 +58,40 @@ export class UserService {
     return {
       id: user.Id,
       username: user.username
+    }
+  }
+
+  async login(request: LoginUserRequest): Promise<UserResponse> {
+    this.logger.info(`Logging in user with email ${JSON.stringify(request)}`);
+
+    const loginUser = this.validationService.validate(
+      UserValidation.LOGIN,
+      request
+    )
+
+    const user = await this.prismaService.user.findFirst({
+      where: {
+        username: loginUser.username
+      },
+      include: {
+        profile: true
+      }
+    })
+
+    if (!user) {
+      throw new HttpException('Invalid username or password', 400)
+    }
+
+    const isPasswordMatch = await bcrypt.compare(loginUser.password, user.password)
+
+    if (!isPasswordMatch) {
+      throw new HttpException('Invalid username or password', 400)
+    }
+
+    return {
+      id: user.Id,
+      username: user.username,
+      fullName: `${user.profile.first_name} ${user.profile.last_name}`
     }
   }
 }
