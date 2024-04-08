@@ -6,6 +6,8 @@ import { PrismaService } from '../common/prisma.service';
 import { Logger } from 'winston';
 import { UserValidation } from './user.validation';
 import * as bcrypt from 'bcrypt';
+import { v4 as uuid } from 'uuid';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -88,10 +90,44 @@ export class UserService {
       throw new HttpException('Invalid username or password', 400)
     }
 
+    const token = uuid()
+
+    await this.prismaService.user.update({
+      where: {
+        Id: user.Id
+      },
+      data: {
+        token: token
+      }
+    })
+
     return {
       id: user.Id,
       username: user.username,
-      fullName: `${user.profile.first_name} ${user.profile.last_name}`
+      fullName: `${user.profile.first_name} ${user.profile.last_name}`,
+      token: token
+    }
+  }
+
+  async get(user: User): Promise<UserResponse> {
+
+    if (!user) {
+      throw new HttpException('Unauthorized', 401)
+    }
+
+    const userData = await this.prismaService.user.findUnique({
+      where: {
+        Id: user.Id
+      },
+      include: {
+        profile: true
+      }
+    })
+
+    return {
+      id: userData.Id,
+      username: userData.username,
+      fullName: `${userData.profile.first_name} ${userData.profile.last_name}`,
     }
   }
 }
